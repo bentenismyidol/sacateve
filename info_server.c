@@ -11,8 +11,8 @@ int main(){
     if (listener == -1)
     {
         perror("socket() failed");
-        return 1;
-    }
+        return 1;\
+        
 
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
