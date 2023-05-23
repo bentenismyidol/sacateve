@@ -1,0 +1,143 @@
+## C basic
+### 1. Syntax
+- memset(): Tác dụng của hàm là set num (byte) giá trị của vùng nhớ tính từ vị trí ptr trỏ tới bằng giá trị value
+void * memset(void * ptr, int value, size_t num);
+- memcpy(): Tác dụng của hàm là sao chép num (byte) từ vị trí mà source trỏ tới đến vị trí mà destination trỏ tới
+void * memcpy(void * destination, const void * source, size_t num);
+- strcpy(): Sao chép nội dung của chuỗi source tới chuỗi destination. Tra ve noi dung moi cua chuoi destination
+char *strcpy(char *destination, const char *source)
+- strstr(): Dùng để tìm kiếm sự xuất hiện đầu tiên của chuỗi s2 trong chuỗi s1.
+char *strstr(const char *s1, const char *s2)
+
+### 2. Socket programming
+- struct sockaddr: Mô tả địa chỉ nói chung
+- struct sockaddr_in: Mô tả địa chỉ IPv4
+- struct socaddr_in6: Mô tả địa chỉ IPv6
+
+# TCP server
+nc -v –l –p <cổng đợi kết nối>
+# TCP client
+nc –v <ip/tên miền> <cổng>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+struct in_addr {
+in_addr_t s_addr; /* địa chỉ IPv4 32 bit */
+/* network byte ordered – big-endian */
+};
+struct sockaddr_in {
+uint8_t sin_len; /* độ dài cấu trúc địa chỉ (16 bytes) */
+sa_family_t sin_family; /* họ địa chỉ IPv4 - AF_INET */
+in_port_t sin_port; /* giá trị cổng */
+/* network byte ordered */
+struct in_addr sin_addr; /* 32 bit địa chỉ */
+/* network byte ordered */
+char sin_zero[8]; /* không sử dụng */
+};
+- socket(int domain, int type, int protocol): Ứng dụng phải tạo SOCKET trước khi có thể gửi nhận dữ liệu.
+- bind(sockfd, sockaddr *addr, socklen_t addrlen): Gắn socket với cấu trúc địa chỉ trong ứng dụng server.
+#include <sys/socket.h>
+int bind (
+int sockfd, // mô tả của socket
+const struct sockaddr *addr, // con trỏ cấu trúc địa chỉ
+socklen_t addrlen // độ dài cấu trúc địa chỉ
+)
+=> Hàm trả về 0 nếu thành công, trả về -1 nếu gặp lỗi
+- listen(int fd, int n) : Chuyển socket sang trạng thái chờ kết nối.
+#include <sys/socket.h>
+int listen (
+int fd, // mô tả của socket
+int n
+// chiều dài hàng đợi chờ kết nối
+)
+=> Hàm trả về 0 nếu thành công, trả về -1 nếu gặp lỗi
+- accept(): Chấp nhận kết nối đang nằm trong hàng đợi.
+#include <sys/socket.h>
+int accept (
+int sockfd, // socket chờ kết nối đã được khởi tạo
+struct sockaddr *addr, // con trỏ địa chỉ client
+socklen_t *addrlen // con trỏ độ dài địa chỉ client
+) 
+=> Hàm trả về mô tả của socket nếu thành công (giá trị kiểu int), trả về -1 nếu gặp lỗi
+### Client
+#include<stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+
+int main(){
+    // khai bao socket
+    int client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    
+    // khai bao dia chi server
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    addr.sin_port = htons(9000);
+   
+    int res = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    
+    if (res<0)
+    {
+        printf("Khong ket noi duoc voi server\n");
+        return -1;
+    }
+
+
+    close(client);
+    return 0;
+}
+### Server
+#include <stdio.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+
+
+int main(){
+    int listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listener == -1)
+    {
+        perror("socket() failed");
+        return 1;
+    }
+
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr.sin_port = htons(9000);
+
+    if (bind(listener, (struct sockaddr *)&addr, sizeof(addr)))
+    {
+        perror("bind() failed");
+        return 1;        
+    }
+    if (listen(listener, 5))
+    {
+        perror("listen() failed");
+        return 1;
+    }
+    // khai bao socket
+    struct sockaddr_in client_addr;
+    int client_addr_len = sizeof(client_addr);
+
+    int client = accept(listener, 
+        (struct sockaddr *)&client_addr, 
+        &client_addr_len);
+
+    if(client == -1){
+        printf("accept() failed.\n");
+        exit(1);
+    }
+
+    close(client);
+    close(listener);
+}
