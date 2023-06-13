@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/sacateve/.vscode-server/data/Machine/hw5",
-      "program": "/home/sacateve/.vscode-server/data/Machine/hw5/build/Debug/outDebug",
+      "cwd": "/home/sacateve/.vscode-server/data/Machine",
+      "program": "/home/sacateve/.vscode-server/data/Machine/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
